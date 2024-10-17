@@ -1,3 +1,6 @@
 dash
 dash-bio
 gunicorn
+html
+pandas
+plotly
