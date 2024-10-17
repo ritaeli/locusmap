@@ -88,5 +88,5 @@ def display_gene_info(selected_gene):
     return "Select a gene to view pathology information."
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 8050))  # Use the port from the environment or default to 8050
+    port = int(os.environ.get("PORT", 10000))  # Use the port from the environment or default to 8050
     app.run_server(host='0.0.0.0', port=port, debug=True)  # Listen on all interfaces
