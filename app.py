@@ -1,16 +1,39 @@
-# main.py
+# -*- coding: utf-8 -*-
+"""chromosomes.py
+
+This file defines a Dash web application to visualize gene information associated with chromosomes.
+"""
 
 from dash import Dash, html, dcc, Input, Output, callback
 import dash_bio as dashbio
 import os
 
+# List of genes with associated locus and pathology info
+genes_info = {
+    'FBN1': {
+        'chromosome': '15',
+        'locus': '15q21',
+        'start': 48400000,
+        'end': 48800000,
+        'color': 'red',
+        'pathology': {
+            'title': 'Syndrome de Marfan',
+            'definition': "Le syndrome de Marfan est une maladie génétique qui affecte le tissu conjonctif.",
+            'prevalence': "Rare, environ 1 personne sur 5000.",
+            'symptoms_general': "Symptômes cardiovasculaires, oculaires et squelettiques.",
+            'symptoms_oral': "Palais ogival, dents encombrées.",
+            'medical_management': "Suivi cardiaque, prévention des complications.",
+            'dental_management': "Prévention des infections buccales et soins orthodontiques."
+        }
+    },
+    # You can add more genes here in the same format as FBN1
+}
+
 # Create the Dash app
 app = Dash(__name__)
+server = app.server  # This line allows Gunicorn to find the app's server
 
-# Define the server
-server = app.server  # This defines the server for Gunicorn
-
-# Layout of the app
+# Define the app layout
 app.layout = html.Div([
     'Select which chromosomes to display on the ideogram below:',
     dcc.Dropdown(
@@ -19,23 +42,26 @@ app.layout = html.Div([
         multi=True,
         value=[str(i) for i in range(1, 23)] + ['X', 'Y']  # Default selection: All chromosomes
     ),
+
     dashbio.Ideogram(
         id='my-default-dashbio-ideogram',
         chromosomes=[str(i) for i in range(1, 23)] + ['X', 'Y'],  # Display all chromosomes by default
         annotations=[{
-            'name': 'FBN1',
-            'chr': '15',
-            'start': 48400000,
-            'stop': 48800000,
-            'color': 'red'
-        }]
+            'name': gene,
+            'chr': info['chromosome'],
+            'start': info['start'],
+            'stop': info['end'],
+            'color': info['color']
+        } for gene, info in genes_info.items()]
     ),
+
     dcc.Dropdown(
         id='gene-dropdown',
-        options=[{'label': 'FBN1', 'value': 'FBN1'}],
+        options=[{'label': gene, 'value': gene} for gene in genes_info.keys()],
         value='FBN1',  # Default gene selection (can be changed)
         placeholder="Select a gene"
     ),
+
     html.Div(id='gene-info')
 ])
 
@@ -46,9 +72,21 @@ app.layout = html.Div([
 )
 def display_gene_info(selected_gene):
     if selected_gene:
-        return html.Div([html.H2(selected_gene)])  # Simplified for demo
+        gene = genes_info[selected_gene]
+        pathology = gene['pathology']
+        return html.Div([
+            html.H2(pathology['title']),
+            html.P(f"Locus: {gene['locus']}"),
+            html.P(f"Definition: {pathology['definition']}"),
+            html.P(f"Prevalence: {pathology['prevalence']}"),
+            html.P(f"General Symptoms: {pathology['symptoms_general']}"),
+            html.P(f"Oral Symptoms: {pathology['symptoms_oral']}"),
+            html.P(f"Medical Management: {pathology['medical_management']}"),
+            html.P(f"Dental Management: {pathology['dental_management']}")
+        ])
     return "Select a gene to view pathology information."
 
-# Run the server if the script is executed directly (not when imported)
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=int(os.environ.get('PORT', 8050)), debug=True)
+    # Run the app on a specified port, defaulting to 10000 if not provided
+    port = int(os.environ.get('PORT', 10000))
+    app.run_server(host='0.0.0.0', port=port, debug=True)
